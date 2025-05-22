@@ -1,0 +1,19 @@
+{# templates/_overall_game_over.html #}
+{# Expects variable: scores (list of dicts with rank, name, game_score) #}
+<h2>Overall Game Over!</h2>
+<h3>Final Game Scores:</h3>
+<ol id="final-game-scoreboard">
+    {% if scores %}
+        {% for res in scores %}
+        {# Apply medal classes based on rank #}
+        <li class="{{ 'first-place' if res.rank == 1 else ('second-place' if res.rank == 2 else ('third-place' if res.rank == 3 else '')) }}">
+            <span class="rank">{{ res.rank }}.</span>
+            <span class="name">{{ res.name }}</span>
+            <span class="score">{{ res.game_score }} Game Points</span>
+        </li>
+        {% endfor %}
+    {% else %}
+        <li>No final scores available.</li>
+    {% endif %}
+</ol>
+<button id="playAgainButton">Play Again?</button>

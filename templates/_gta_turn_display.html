@@ -1,0 +1,27 @@
+{# templates/_gta_turn_display.html #}
+{# Expects variables: turn, total_turns, celebrity, players_status #}
+<div id="gta-content"> {# Keep outer ID consistent for potential JS hooks #}
+    <h3>Turn {{ turn }} / {{ total_turns }}</h3>
+    <div id="gta-display">
+        {% if celebrity and celebrity.image_url %}
+        <img id="gta-celebrity-image" src="{{ celebrity.image_url }}" alt="{{ celebrity.name or 'Celebrity' }}" onerror="this.style.display='none'; console.error('Failed to load image:', this.src)">
+        {% else %}
+        <p>(Image not available)</p>
+        {% endif %}
+        <h3 id="gta-celebrity-name">{{ celebrity.name or 'Unknown Celebrity' }}</h3>
+        <p id="gta-celebrity-description">{{ celebrity.description or 'No description available.' }}</p>
+    </div>
+    <h3>Player Status (Current Turn):</h3>
+    <ul id="gta-player-guess-status">
+        {% if players_status %}
+            {% for p_status in players_status %}
+            {# Create safe ID for JS updates later #}
+            <li id="gta-player-status-{{ p_status.name|replace('[^a-zA-Z0-9-_]', '_') }}">
+                {{ p_status.name }}
+            </li>
+            {% endfor %}
+        {% else %}
+            <li>No players found.</li>
+        {% endif %}
+    </ul>
+</div>

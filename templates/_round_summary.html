@@ -1,0 +1,31 @@
+{# templates/_round_summary.html #}
+{# Expects: round_type, rankings (list of dicts with rank, name, round_score, points_awarded), overall_scores #}
+<h2 id="results-title">Round Complete!</h2>
+<h3 id="results-subtitle">Round Type: {{ round_type or 'Unknown' }}</h3>
+<h4>Round Rankings & Game Points Awarded:</h4>
+<ul id="results-list">
+    {% if rankings %}
+        {% for res in rankings %}
+        <li>
+            <span class="player-name">{{ res.rank }}. {{ res.name }}</span>
+            <span class="detail-1">Round Score: {{ res.round_score }}</span> {# Show round score #}
+            <span class="detail-2" style="background-color: #2ecc71; color: #2c3e50;">+#{{ res.points_awarded }}pts</span> {# Show points awarded #}
+            <span class="detail-3"></span> {# Maybe remove or use for something else #}
+        </li>
+        {% endfor %}
+    {% else %}
+        <li>No ranking results available.</li>
+    {% endif %}
+</ul>
+<div id="results-overall-scores" style="margin-top: 15px;">
+    <h4>Overall Game Scores (After Round):</h4>
+    <div id="results-overall-score-display">
+         {% if overall_scores %}
+            {% for score in overall_scores %}
+            <span>{{ score.name }}: {{ score.game_score }}pts</span>
+            {% endfor %}
+         {% else %}
+            <span>No overall scores yet.</span>
+         {% endif %}
+    </div>
+</div>

@@ -1,0 +1,10 @@
+{# templates/_round_intro.html #}
+{# Expects: game_round_num, game_rounds_total, round_type_name, round_rules #}
+<div id="round-intro-content" style="padding: 30px;">
+    <h2>Game Round {{ game_round_num }} / {{ game_rounds_total }}</h2>
+    <h1 style="color: #f1c40f; margin-bottom: 20px;">{{ round_type_name or 'Next Round!' }}</h1>
+    <p style="font-size: 1.1em; max-width: 600px; margin: auto; line-height: 1.6;">
+        {{ round_rules or 'Get ready!' }}
+    </p>
+    {# Maybe add a 'Starting soon...' message #}
+</div>

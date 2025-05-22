@@ -1,0 +1,119 @@
+[
+  {
+    "question": "Which of these tennis players did NOT win the men's singles title at Wimbledon?",
+    "options": [
+      "Andy Murray", "Roger Federer", "Rafael Nadal",
+      "Andre Agassi", "Pete Sampras", "Stan Wawrinka"
+    ],
+    "correct_answer": "Stan Wawrinka",
+    "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Wimbledon_Logo_2021.svg/1200px-Wimbledon_Logo_2021.svg.png"
+  },
+  {
+    "question": "Which of these elements is NOT a Noble Gas?",
+    "options": [
+      "Helium", "Neon", "Argon",
+      "Nitrogen", "Krypton", "Xenon"
+    ],
+    "correct_answer": "Nitrogen",
+    "image_url": null
+  },
+  {
+    "question": "Which of these is NOT a Planet in our Solar System",
+    "options": [
+      "Pluto", "Mercury", "Venus",
+      "Earth", "Mars","Jupiter"
+    ],
+    "correct_answer": "Pluto",
+    "image_url": null
+  },
+  {
+    "question": "Which of these teams has NOT won the European Cup/Champions League",
+    "options": [
+      "Arsenal", "Manchester United", "Manchester City",
+      "Chelsea", "Liverpool","Aston Villa"
+    ],
+    "correct_answer": "Arsenal",
+    "image_url": null
+  },
+  {
+    "question": "Which of these teams has NOT won the Premier League",
+    "options": [
+      "Arsenal", "Manchester United", "Manchester City",
+      "Chelsea", "Liverpool","Tottenham Hotspur"
+    ],
+    "correct_answer": "Tottenham Hotspur",
+    "image_url": null
+  },
+  {
+    "question": "Which of these cities has NOT hosted the Olympics",
+    "options": [
+      "New York", "London", "Paris",
+      "Munich", "Athens","Sydney"
+    ],
+    "correct_answer": "New York",
+    "image_url": null
+  },
+  {
+    "question": "Which of these actors has NOT won an Oscar",
+    "options": [
+      "Tom Cruise", "Will Smith", "Colin Firth",
+      "Jack Nicholson", "Nicholas Cage","Tom Hanks"
+    ],
+    "correct_answer": "Tom Cruise",
+    "image_url": null
+  },
+  {
+    "question": "Which of these actresses has NOT won an Oscar",
+    "options": [
+      "Sigourney Weaver", "Meryl Streep", "Sandra Bullock",
+      "Reese Witherspoon", "Nicole Kidman","Julia Roberts"
+    ],
+    "correct_answer": "Sigourney Weaver",
+    "image_url": null
+  },
+  {
+    "question": "Which of these celebrities was NOT a judge on Britain's Got Talent",
+    "options": [
+      "David Hasselhoff", "Michael McIntyre", "Bruno Tonioli",
+      "Piers Morgan", "David Walliams","Cheryl Cole"
+    ],
+    "correct_answer": "Cheryl Cole",
+    "image_url": "https://c.files.bbci.co.uk/BE78/production/_106306784_bgtlogosmall.jpg"
+  },
+  {
+    "question": "Which Coronation Street character (not actor/actress) has NOT appeared in at least 3,000 episodes",
+    "options": [
+      "Ken Barlow", "Kevin Webster", "Deirdre Barlow",
+      "Steve McDonald", "Betty Williams","David Platt"
+    ],
+    "correct_answer": "Betty Williams",
+    "image_url": "https://upload.wikimedia.org/wikipedia/en/8/86/Coronation_Street_Titles.png"
+  },
+  {
+    "question": "Which Eastenders character (not actor/actress) has NOT appeared in at least 2,000 episodes",
+    "options": [
+      "Pauline Fowler", "Pat Butcher", "Ian Beale",
+      "Dot Cotton", "Kathy Beale","Sharon Watts"
+    ],
+    "correct_answer": "Pauline Fowler",
+    "image_url": "https://upload.wikimedia.org/wikipedia/en/8/86/Coronation_Street_Titles.png"
+  },
+  {
+    "question": "Which act has NOT had a UK Christmas Number 1",
+    "options": [
+      "Spice Girls", "The Beatles", "Michael Jackson",
+      "Queen", "Elvis Presley","Westlife"
+    ],
+    "correct_answer": "Westlife",
+    "image_url": "https://images.squarespace-cdn.com/content/v1/5b3ded77e2ccd1a90cd9722b/22dbff9e-47b4-439c-91ff-69c6cc1ffd02/xmas_number_one_.jpg"
+  },
+  {
+    "question": "Which act has NOT had at least 10 UK Number 1 hits",
+    "options": [
+      "Cliff Richard", "Westlife", "Madonna",
+      "Take That", "Elton John","The Rolling Stones"
+    ],
+    "correct_answer": "The Rolling Stones",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Totp_logo_1998.svg/200px-Totp_logo_1998.svg.png"
+  }
+]

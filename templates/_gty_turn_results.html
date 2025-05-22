@@ -1,0 +1,20 @@
+{# templates/_gty_turn_results.html #}
+{# Expects: question_text, correct_year, results (list of dicts with name, guess, diff, round_score) #}
+<h2 id="results-title">Turn Results</h2>
+<h3 id="results-subtitle" style="font-size: 1.1em; color: #ecf0f1;">Question: {{ question_text }}</h3>
+<h3 style="color:#2ecc71;">Correct Year: {{ correct_year if correct_year is not none else '--' }}</h3>
+<ul id="results-list">
+    {% if results %}
+        {% for res in results %}
+        <li class="{{ 'highlight' if res.diff == 0 }}"> {# Highlight exact year #}
+            <span class="player-name">{{ res.name }}</span>
+            <span class="detail-1">G: {{ res.guess }}</span>
+            <span class="detail-2">Diff: {{ res.diff }}</span>
+            <span class="detail-3">Rnd Score: {{ res.round_score }}</span>
+        </li>
+        {% endfor %}
+    {% else %}
+        <li>No results available.</li>
+    {% endif %}
+</ul>
+<div id="results-overall-scores" class="hidden"></div> {# Keep placeholder #}

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handley's Fun Factory - Main Screen</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        /* --- Styles (Assume unchanged and correct from previous version) --- */
+        body { font-family: sans-serif; background-color: #2c3e50; color: #ecf0f1; padding: 20px; margin:0; text-align: center; }
+        .container { max-width: 900px; margin: auto; background-color: #34495e; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.5); text-align: center; }
+        h1, h2, h3 { text-align: center; color: #e67e22; }
+        .hidden { display: none !important; }
+        button { padding: 12px 20px; font-size: 1.1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 20px auto; display: block; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        ul, ol { list-style: none; padding: 0; }
+        li { background-color: #2c3e50; margin: 5px 0; padding: 8px; border-radius: 4px; }
+        #splash-screen { padding: 40px 20px; }
+        #splash-logo { max-width: 80%; height: auto; margin-bottom: 30px; border-radius: 10px; }
+        #initiateGameButton { font-size: 1.5em; padding: 15px 30px; }
+        #waiting-area { text-align: center; }
+        #waiting-area p { font-size: 1.2em; }
+        #waiting-area h3 { margin-top: 20px; }
+        #player-list li { display: inline-block; margin: 5px; padding: 10px 15px; background-color: #1abc9c; color: #2c3e50; font-weight: bold; font-size: 1.1em; border-radius: 5px; }
+        #round-content-area { text-align: center; min-height: 400px; }
+        #gta-display img, #gty-question-display img { /* Combine image styles */
+             max-width: 300px; max-height: 300px; border: 3px solid #ecf0f1; border-radius: 5px;
+             margin-bottom: 15px; object-fit: cover; display: block; margin-left: auto; margin-right: auto; }
+        #gta-display h3, #gty-question-display h3 { margin-top: 0; font-size: 1.8em; } /* Style consistency */
+        #gta-display p, #gty-question-display p { font-size: 1.1em; color: #bdc3c7; }
+        #gta-player-guess-status li, #gty-player-guess-status li, #wddi-player-guess-status li { /* Common styling for player status */
+             display: inline-block; margin: 4px; padding: 6px 12px; background-color: #95a5a6;
+             color: #ecf0f1; transition: background-color 0.3s ease; border-radius: 4px; }
+        #gta-player-guess-status li.guessed, #gty-player-guess-status li.guessed, #wddi-player-guess-status li.guessed { /* Common styling for guessed state */
+             background-color: #27ae60; text-decoration: none; color: white; }
+        #results-area { text-align: center; min-height: 400px; }
+        #results-title { color: #f1c40f; }
+        #results-subtitle { color: #3498db; font-size: 1.2em; margin-bottom: 10px;}
+        #results-list li { background-color: #3498db; color: white; display: flex; justify-content: space-between; align-items: center; padding: 10px; font-size: 1.1em; margin-bottom: 8px; }
+        #results-list li span { margin: 0 5px; }
+        #results-list li .player-name { flex-basis: 30%; text-align: left; font-weight: bold;}
+        #results-list li .detail-1 { flex-basis: 25%; text-align: center; }
+        #results-list li .detail-2 { flex-basis: 15%; text-align: center; font-weight: bold; background-color: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 3px;}
+        #results-list li .detail-3 { flex-basis: 30%; text-align: right; font-style: italic; }
+        #results-list li.highlight { background-color: #2ecc71 !important; color: #2c3e50 !important;} /* Added !important */
+        #overall-game-over-area { text-align: center; min-height: 400px; }
+        #final-game-scoreboard li { background-color: #e67e22; font-size: 1.2em; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between;}
+        #final-game-scoreboard li .rank { font-weight: bold; margin-right: 15px;}
+        #final-game-scoreboard li .name { flex-grow: 1; text-align: left;}
+        #final-game-scoreboard li .score { font-weight: bold; }
+        #final-game-scoreboard li:first-child { background-color: #f1c40f; color: #2c3e50; font-weight: bold;}
+        #final-game-scoreboard li:nth-child(2) { background-color: #bdc3c7; color: #2c3e50;}
+        #final-game-scoreboard li:nth-child(3) { background-color: #cd7f32; color: white;}
+        #status-bar { margin-top: 20px; text-align: center; font-style: italic; color: #bdc3c7; background-color: rgba(0,0,0,0.3); padding: 5px; border-radius: 4px; min-height: 2.5em; }
+        #overall-score-display { margin-top: 5px; font-size: 0.9em; }
+        #overall-score-display span { margin: 0 8px; background-color: #1abc9c; color: #2c3e50; padding: 2px 6px; border-radius: 3px; display: inline-block; }
+        #mute-button { position: fixed; bottom: 10px; right: 10px; padding: 5px 10px; font-size: 0.8em; background-color: rgba(0, 0, 0, 0.5); color: white; border: 1px solid white; cursor: pointer; z-index: 100; }
+        .wddi-options-list {
+            list-style: none; /* Remove default numbering/bullets visually */
+            padding: 0;       /* Remove default padding */
+            display: flex;    /* Enable Flexbox */
+            flex-wrap: wrap;  /* Allow items to wrap to the next line */
+            justify-content: space-around; /* Distribute space between columns */
+            max-width: 700px; /* Adjust max-width as needed */
+            margin: 15px auto; /* Center the block */
+        }
+
+        .wddi-options-list li {
+            box-sizing: border-box; /* Include padding/border in width calculation */
+            flex-basis: 48%; /* Aim for slightly less than 50% to allow for gaps */
+            /* Alternatively use width: 48%; */
+            margin-bottom: 15px; /* Space below items */
+            padding: 15px 10px;  /* Adjust padding */
+            text-align: center; /* Center text within the button-like item */
+
+            /* Keep your existing styling for background, color, border-radius etc. */
+            background-color: #1abc9c; /* Example: same as player list items? */
+            color: #2c3e50;
+            border-radius: 5px;
+            font-size: 1.1em;
+        }
+
+        .question-image { /* Specific class for WDDI image */
+            max-width: 250px; /* Adjust size as needed */
+            max-height: 250px;
+            border: 3px solid #ecf0f1;
+            border-radius: 5px;
+            margin: 15px auto; /* Center horizontally */
+            object-fit: cover;
+            display: block;
+        }
+
+        .results-options li.correct-answer-highlight {
+            background-color: #2ecc71 !important; /* Bright Green */
+            color: #ffffff !important; /* White text */
+            font-weight: bold;
+            border: 2px solid yellow; /* Optional: Add a border */
+            /* flex-basis and margin should inherit or be restated if needed */
+        }
+
+        .results-options li {
+            flex-basis: 48%;
+            /* Add other specific styles if needed */
+        }
+    </style>
+</head>
+<body>
+    <button id="mute-button">Mute</button>
+    <div class="container">
+        <!-- Static HTML Structure -->
+        <div id="splash-screen">
+            <h1>Welcome to</h1>
+            <img id="splash-logo" src="/static/image/colour_logo.jpeg" alt="Handley's Fun Factory Logo">
+            <button id="initiateGameButton">Start New Game</button>
+        </div>
+        <div id="waiting-area" class="hidden">
+             <h2>Waiting for Players...</h2>
+             <p>Connect: <strong>http://<span id="connect-ip">...</span>:5000</strong> (Max 8)</p>
+             <h3>Connected Players:</h3>
+             <ul id="player-list"><li>Loading...</li></ul>
+             <button id="startGameButton" disabled>Start Game</button>
+        </div>
+        <div id="round-content-area" class="hidden"></div>
+        <div id="results-area" class="hidden"></div>
+        <div id="overall-game-over-area" class="hidden"></div>
+        <div id="status-bar">Status: <span id="game-state">Initializing...</span><div id="overall-score-display"></div></div>
+        <audio id="theme-music" src="/static/audio/main-theme.mp3" loop preload="auto"></audio>
+    </div>
+
+    <script>
+        // --- Element Refs (obtained after DOM loaded) ---
+        let splashScreen, initiateGameButton, waitingArea, playerList, startGameButton;
+        let roundContentArea, resultsArea, overallGameOverArea, statusBar, gameStateSpan;
+        let overallScoreDisplay, connectIpSpan, themeMusic, muteButton, playAgainButton;
+
+        const serverIp = window.location.hostname;
+        const socket = io(`http://${serverIp}:5000`);
+
+        // --- Helper Functions ---
+        function showArea(areaToShowId) {
+            console.log(`Showing area: ${areaToShowId}`);
+            [splashScreen, waitingArea, roundContentArea, resultsArea, overallGameOverArea].forEach(area => {
+                if (!area) return; area.id === areaToShowId ? area.classList.remove('hidden') : area.classList.add('hidden');
+            });
+            // Ensure specific content areas are hidden when not in round content view
+            const gtaContent = document.getElementById('gta-content'); if (gtaContent && areaToShowId !== 'round-content-area') gtaContent.classList.add('hidden');
+            const gtyContent = document.getElementById('gty-content'); if (gtyContent && areaToShowId !== 'round-content-area') gtyContent.classList.add('hidden');
+            // WDDI content removed
+        }
+        function updateOverallScoresUI(scoresData) {
+             if (!overallScoreDisplay) return;
+             const scoreHtml = (scoresData || []).map(p => `<span>${p.name}: ${p.game_score}pts</span>`).join(' ');
+             overallScoreDisplay.innerHTML = scoreHtml;
+             const resultsScoreElement = document.getElementById('results-overall-score-display'); // Find dynamically if needed
+             if (resultsScoreElement) resultsScoreElement.innerHTML = scoreHtml;
+        }
+
+        // --- Socket Event Listeners ---
+        socket.on('connect', () => {
+            console.log('Main Screen Connected!'); if(gameStateSpan) gameStateSpan.textContent = 'Connected';
+            socket.emit('register_main_screen'); showArea('splash-screen');
+        });
+        socket.on('disconnect', () => { if(gameStateSpan) gameStateSpan.textContent = 'DISCONNECTED!'; showArea('splash-screen'); });
+        socket.on('message', (data) => { console.log('Server Message:', data.data); });
+
+        socket.on('update_html', (data) => {
+            console.log(`Received HTML update for: ${data.target_selector}`);
+            const targetElement = document.querySelector(data.target_selector);
+            if (targetElement) {
+                targetElement.innerHTML = data.html; console.log(`Target ${data.target_selector} updated.`);
+                const parentArea = targetElement.closest('#round-content-area, #results-area, #overall-game-over-area');
+                if (parentArea) { showArea(parentArea.id); }
+                 else if (data.target_selector === '#player-list') { if (splashScreen && splashScreen.classList.contains('hidden')) { showArea('waiting-area'); } }
+                 else if (data.target_selector === '#overall-game-over-area') {
+                     playAgainButton = document.getElementById('playAgainButton');
+                     if (playAgainButton) { playAgainButton.addEventListener('click', startGameHandler); }
+                 }
+                 // <<< NEW: Ensure inner content visible after injection >>>
+                 if (data.target_selector === '#round-content-area') {
+                     const gtaContentEl = targetElement.querySelector('#gta-content'); if (gtaContentEl) gtaContentEl.classList.remove('hidden');
+                     const gtyContentEl = targetElement.querySelector('#gty-content'); if (gtyContentEl) gtyContentEl.classList.remove('hidden');
+                     const wddiContentEl = targetElement.querySelector('#wddi-content'); if (wddiContentEl) wddiContentEl.classList.remove('hidden');
+                 } else if (data.target_selector === '#results-area') {
+                     const resultsOverallScoresDivEl = targetElement.querySelector('#results-overall-scores');
+                     // Show overall scores only if it's a round summary (check based on content?)
+                     // Let's assume round summary always includes it, show it if found
+                     if (resultsOverallScoresDivEl) {
+                         const overallScoreData = overallScoreDisplay ? overallScoreDisplay.innerHTML : ''; // Get current scores
+                         const resultsOverallScoreDisplayEl = resultsOverallScoresDivEl.querySelector('#results-overall-score-display');
+                         if (resultsOverallScoreDisplayEl) resultsOverallScoreDisplayEl.innerHTML = overallScoreData;
+                         resultsOverallScoresDivEl.classList.remove('hidden'); // Show the div
+                     }
+                 }
+            } else { console.error(`Target "${data.target_selector}" not found.`); }
+        });
+
+        socket.on('game_state_update', (data) => {
+            console.log('Game State Update:', data);
+            if(gameStateSpan) { /* Update status text */ }
+            updateOverallScoresUI(data.overall_scores || []);
+            if (data.game_state === 'waiting') {
+                 if(startGameButton) { startGameButton.disabled = !(data.overall_scores && data.overall_scores.length > 0 && data.game_rounds_total > 0); }
+                 if (splashScreen && splashScreen.classList.contains('hidden')) { showArea('waiting-area'); } else { showArea('splash-screen');}
+                 if(startGameButton) startGameButton.classList.remove('hidden');
+                 if(playAgainButton) playAgainButton.classList.add('hidden');
+            }
+            // ... other state handling (visibility driven by update_html) ...
+        });
+
+        // --- Specific Round Guessed Markers ---
+        socket.on('gta_mark_player_guessed', (data) => {
+             const safeId = data.safe_id.replace(/[^a-zA-Z0-9-_]/g, '_'); // Ensure ID safety
+             const el = document.getElementById(`gta-player-status-${safeId}`);
+             if (el && !el.classList.contains('guessed')) { el.classList.add('guessed'); el.textContent += ' ✅'; }
+        });
+         socket.on('gty_mark_player_guessed', (data) => { // Listener for GTY
+             const safeId = data.safe_id.replace(/[^a-zA-Z0-9-_]/g, '_');
+             const el = document.getElementById(`gty-player-status-${safeId}`);
+             if (el && !el.classList.contains('guessed')) { el.classList.add('guessed'); el.textContent += ' ✅'; }
+        });
+        socket.on('wddi_mark_player_guessed', function(data) {
+        console.log('WDDI Player guessed:', data.safe_id);
+        // Use the consistent ID pattern from the HTML template
+        const playerElementId = 'wddi-player-status-' + data.safe_id;
+        const playerElement = document.getElementById(playerElementId);
+        if (playerElement) {
+            console.log('Found WDDI element:', playerElement);
+            // Add the 'guessed' class - relies on CSS in main_screen.html
+            if (!playerElement.classList.contains('guessed')) {
+                playerElement.classList.add('guessed');
+                // Optional: Add a checkmark like GTA/GTY if desired
+                playerElement.textContent += ' ✅';
+            }
+            } else {
+                console.warn('Could not find WDDI player status element:', playerElementId);
+            }
+        });
+
+        // --- User Interaction Handlers ---
+        function initiateGameHandler() {
+            console.log("Initiate button clicked."); showArea('waiting-area');
+            if (themeMusic && themeMusic.paused) { themeMusic.volume = 0.3; themeMusic.play().catch(e => console.error("Music Error:", e)); }
+        }
+        function startGameHandler() {
+            console.log('Start/Play Again clicked.'); if(startGameButton) startGameButton.disabled = true; if(playAgainButton) playAgainButton.disabled = true;
+            socket.emit('start_game_request'); if (themeMusic && themeMusic.paused) { themeMusic.play().catch(e => console.error("Music Error:", e)); }
+        }
+
+        // --- Attach Listeners After DOM Loaded ---
+        document.addEventListener('DOMContentLoaded', (event) => {
+            console.log("DOM loaded");
+            // Get references
+            splashScreen = document.getElementById('splash-screen'); initiateGameButton = document.getElementById('initiateGameButton');
+            waitingArea = document.getElementById('waiting-area'); playerList = document.getElementById('player-list');
+            startGameButton = document.getElementById('startGameButton'); roundContentArea = document.getElementById('round-content-area');
+            resultsArea = document.getElementById('results-area'); overallGameOverArea = document.getElementById('overall-game-over-area');
+            statusBar = document.getElementById('status-bar'); gameStateSpan = document.getElementById('game-state');
+            overallScoreDisplay = document.getElementById('overall-score-display'); connectIpSpan = document.getElementById('connect-ip');
+            themeMusic = document.getElementById('theme-music'); muteButton = document.getElementById('mute-button');
+            playAgainButton = document.getElementById('playAgainButton');
+            if (!splashScreen || !waitingArea || !statusBar || !initiateGameButton || !themeMusic || !muteButton) { console.error("Essential elements missing!"); return; }
+            if(connectIpSpan && serverIp) connectIpSpan.textContent = serverIp;
+            // Attach listeners
+            if(initiateGameButton) initiateGameButton.addEventListener('click', initiateGameHandler);
+            if(startGameButton) startGameButton.addEventListener('click', startGameHandler);
+            // Play again listener attached when its area is rendered
+            if (muteButton && themeMusic) { muteButton.addEventListener('click', () => { themeMusic.muted = !themeMusic.muted; muteButton.textContent = themeMusic.muted ? 'Unmute' : 'Mute'; }); }
+            console.log("Initial listeners attached."); showArea('splash-screen');
+        });
+    </script>
+</body>
+</html>

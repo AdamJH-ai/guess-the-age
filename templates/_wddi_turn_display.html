@@ -1,0 +1,50 @@
+{# templates/_wddi_turn_display.html #}
+{# Expects: turn, total_turns, question_text, image_url (optional), shuffled_options, players_status #}
+
+{# Use a wrapper ID consistent with your main_screen.html JS if needed #}
+<div id="wddi-content" class="round-container wddi-turn"> {# Add classes for potential styling #}
+    <h3>Turn {{ turn }} / {{ total_turns }}</h3>
+
+    {# Use classes styled in main_screen.html #}
+    <div class="question-area">
+        <h2 style="color: #f1c40f;">{{ question_text or 'Question Loading...' }}</h2> {# Kept color inline as it was specific, but could be class based #}
+
+        {# Conditionally display image #}
+        {% if image_url %}
+            <img src="{{ image_url }}" alt="Question related image" class="question-image"> {# Use class for styling #}
+        {% endif %}
+    </div>
+
+    <div class="options-area"> {# Wrapper for options #}
+        <p style="font-size: 1.2em;">Which one of these doesn't belong?</p> {# Kept font-size inline, consider class #}
+        {# Use ol for numbered list, style via CSS #}
+        <ul class="wddi-options-list">
+            {% if shuffled_options %}
+                {% for option in shuffled_options %}
+                    {# Use classes for styling list items #}
+                    <li>{{ option }}</li>
+                {% endfor %}
+            {% else %}
+                 <li>Options loading...</li>
+            {% endif %}
+        </ol>
+    </div>
+
+    {# Use the same structure and IDs as GTA/GTY for player status #}
+    <div class="players-waiting-area"> {# Wrapper #}
+        <h3>Player Status:</h3>
+        <ul id="wddi-player-guess-status"> {# ID matching JS expectations #}
+            {% if players_status %}
+                {% for p_status in players_status %}
+                {# Ensure safe_id generation matches JS #}
+                {% set safe_id = p_status.name | replace('[^a-zA-Z0-9-_]', '_') %}
+                <li id="wddi-player-status-{{ safe_id }}"> {# ID matching JS listener target #}
+                    {{ p_status.name }}
+                </li>
+                {% endfor %}
+            {% else %}
+                <li>No players found.</li>
+            {% endif %}
+        </ul>
+    </div>
+</div>

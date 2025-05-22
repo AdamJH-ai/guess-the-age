@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Controller</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 15px; background-color: #eee; }
+        .container { max-width: 400px; margin: auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); text-align: center;}
+        h1 { font-size: 1.2em; margin-bottom: 20px; color: #333; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"] { width: 80%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 1.1em; }
+        button { padding: 12px 25px; font-size: 1.1em; background-color: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        .hidden { display: none !important; }
+        #status-message { margin-top: 20px; font-weight: bold; color: #e67e22; min-height: 2em; }
+        #game-info { font-size: 0.9em; color: #555; margin-bottom: 10px; }
+        #wddi-options-area { margin-top: 15px; }
+        #wddi-options-area button { display: inline-block; width: 45%; margin: 5px 2%; padding: 15px 5px; font-size: 1.2em; background-color: #9b59b6; }
+        #wddi-options-area button:disabled { background-color: #bdc3c7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Name Entry Area -->
+        <div id="name-entry-area">
+            <h1>Enter Your Name</h1>
+            <label for="nameInput">Name:</label>
+            <input type="text" id="nameInput" maxlength="15" placeholder="Your Name">
+            <button id="joinButton">Join Game</button>
+        </div>
+
+        <!-- Guessing Area (Hidden Initially) -->
+        <div id="guessing-area" class="hidden">
+            <label id="guess-label">Prompt:</label>
+            <!-- Input for GTA/GTY -->
+            <input type="number" id="guessInput" placeholder="Enter number..." class="hidden">
+            <button id="submitGuessButton" class="hidden" disabled>Submit Guess</button>
+            <!-- Area for WDDI buttons -->
+            <div id="wddi-options-area" class="hidden"></div>
+        </div>
+
+        <!-- Status Message Area -->
+        <div id="status-message">Connecting...</div>
+    </div>
+
+    <script>
+        console.log("Player HTML Script Started.");
+
+        // --- Element Refs (obtained in DOMContentLoaded) ---
+        let nameEntryArea, nameInput, joinButton, guessingArea, guessLabel, guessInput;
+        let submitGuessButton, statusMessage, wddiOptionsArea;
+        let currentClientRoundType = null;
+
+        const serverIp = window.location.hostname;
+        console.log(`Connecting to server: http://${serverIp}:5000`);
+        const socket = io(`http://${serverIp}:5000`);
+
+        // --- Helper Functions ---
+        function showArea(areaToShowId) {
+             // Add detailed logging inside showArea
+             console.log(`Player: Attempting to show area ${areaToShowId}`);
+             [nameEntryArea, guessingArea].forEach(area => {
+                 if (!area) {
+                     console.error(`  -> ERROR: Area variable is null/undefined in showArea loop! Cannot process ID: ${area ? area.id : 'N/A'}`);
+                     return;
+                 }
+                 const areaId = area.id;
+                 console.log(`  -> Checking area: ${areaId}`);
+                 const hadHidden = area.classList.contains('hidden');
+
+                 if (areaId === areaToShowId) {
+                     area.classList.remove('hidden');
+                     console.log(`  -> Should Show ${areaId}. Was hidden? ${hadHidden}. Now hidden? ${area.classList.contains('hidden')}.`);
+                 } else {
+                     area.classList.add('hidden');
+                     console.log(`  -> Should Hide ${areaId}. Was hidden? ${hadHidden}. Now hidden? ${area.classList.contains('hidden')}.`);
+                 }
+             });
+             console.log(`Player: Finished showArea attempt for ${areaToShowId}`);
+         }
+
+        function configureInputArea(roundType) {
+             if (!guessInput || !submitGuessButton || !wddiOptionsArea) {
+                 console.error("ERROR: Input configuration failed - one or more elements missing.");
+                 return;
+             }
+             console.log("Configuring input for type:", roundType);
+             if (roundType === 'gta' || roundType === 'gty') {
+                 guessInput.classList.remove('hidden');
+                 submitGuessButton.classList.remove('hidden');
+                 wddiOptionsArea.classList.add('hidden');
+                 wddiOptionsArea.innerHTML = ''; // Clear buttons
+                 submitGuessButton.disabled = true; // Disable initially
+                 guessInput.disabled = true;
+             } else if (roundType === 'wddi') {
+                 guessInput.classList.add('hidden');
+                 submitGuessButton.classList.add('hidden');
+                 wddiOptionsArea.classList.remove('hidden');
+                 wddiOptionsArea.innerHTML = ''; // Clear buttons before adding new ones
+             } else { // Waiting or unknown
+                 guessInput.classList.add('hidden');
+                 submitGuessButton.classList.add('hidden');
+                 wddiOptionsArea.classList.add('hidden');
+                 wddiOptionsArea.innerHTML = ''; // Ensure clear
+             }
+         }
+
+        // --- Socket Event Listeners ---
+        socket.on('connect', () => {
+            console.log('Player Connected! Socket ID:', socket.id);
+            if (statusMessage) statusMessage.textContent = 'Connected! Enter name.';
+            showArea('name-entry-area'); // Show name entry on connect
+            if (joinButton) joinButton.disabled = false;
+            configureInputArea(null); // Ensure all guess inputs hidden
+            currentClientRoundType = null;
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Player Disconnected.');
+            if (statusMessage) statusMessage.textContent = 'Disconnected! Reconnect?'; // Changed message slightly
+            showArea('name-entry-area'); // Revert to name entry
+            if (submitGuessButton) submitGuessButton.disabled = true;
+            if (joinButton) joinButton.disabled = true; // Disable join until reconnected
+            currentClientRoundType = null;
+        });
+
+        socket.on('message', (data) => {
+            console.log('Player Server Message:', data.data);
+            if (statusMessage) statusMessage.textContent = data.data;
+        });
+
+        // --- GTA Listeners ---
+        socket.on('gta_player_prompt', (data) => {
+            console.log('--- Event: gta_player_prompt received ---', data);
+            currentClientRoundType = 'gta'; configureInputArea('gta');
+            if(guessLabel) guessLabel.textContent = `Guess Age: ${data.celebrity_name}`;
+            if(guessInput) { guessInput.placeholder = 'Age (0-120)'; guessInput.min='0'; guessInput.max='120'; guessInput.disabled = false; guessInput.value='';}
+            if(submitGuessButton) submitGuessButton.disabled = false;
+            if(statusMessage) statusMessage.textContent = 'Enter guess!'; showArea('guessing-area');
+            console.log('GTA Guessing area shown.');
+        });
+        socket.on('gta_wait_for_guesses', (data) => {
+            console.log('GTA Wait'); if(statusMessage) statusMessage.textContent = `Waiting (${data.waiting_on} left)...`;
+            if(guessInput) guessInput.disabled = true; if(submitGuessButton) submitGuessButton.disabled = true;
+        });
+
+        // --- GTY Listeners ---
+        socket.on('gty_player_prompt', (data) => {
+             console.log('--- Event: gty_player_prompt received ---', data); currentClientRoundType = 'gty'; configureInputArea('gty');
+             if(guessLabel) guessLabel.textContent = `Q: ${data.question}`;
+             if(guessInput) { guessInput.placeholder = 'Year (YYYY)'; guessInput.min=''; guessInput.max=''; guessInput.disabled = false; guessInput.value='';}
+             if(submitGuessButton) submitGuessButton.disabled = false;
+             if(statusMessage) statusMessage.textContent = 'Enter guess!'; showArea('guessing-area');
+             console.log('GTY Guessing area shown.');
+        });
+        socket.on('gty_wait_for_guesses', (data) => {
+             console.log('GTY Wait'); if(statusMessage) statusMessage.textContent = `Waiting (${data.waiting_on} left)...`;
+             if(guessInput) guessInput.disabled = true; if(submitGuessButton) submitGuessButton.disabled = true;
+        });
+
+        socket.on('wddi_player_prompt', (data) => {
+            // data should contain { question: "...", shuffled_options: ["Opt A", "Opt B", ...] }
+            console.log('--- Event: wddi_player_prompt received ---', data);
+            if (!data || !data.shuffled_options || data.shuffled_options.length !== 6) {
+                console.error("WDDI prompt received invalid data:", data);
+                if(statusMessage) statusMessage.textContent = "Error loading question.";
+                return;
+            }
+
+            currentClientRoundType = 'wddi';
+            configureInputArea('wddi'); // Hides text input, shows button area
+
+            if(guessLabel) {
+                // Use the actual question text received
+                guessLabel.textContent = data.question || "Which one doesn't belong?";
+            }
+            if(statusMessage) {
+                statusMessage.textContent = 'Choose an option (1-6):';
+            }
+
+            if(wddiOptionsArea) {
+                wddiOptionsArea.innerHTML = ''; // Clear any old buttons first
+                console.log("   Creating WDDI option buttons...");
+
+                // Loop through the SHUFFLED options received from the server
+                data.shuffled_options.forEach((optionText, index) => {
+                    const button = document.createElement('button');
+                    // Label button 1-6, and maybe include the text? Or keep it simple?
+                    // Let's include text for clarity on the small screen.
+                    button.textContent = optionText;
+                    button.dataset.optionText = optionText; // Store the actual text to send back
+                    button.addEventListener('click', handleWddiChoice);
+                    wddiOptionsArea.appendChild(button);
+                    console.log(`    -> Created button ${index + 1} for option: ${optionText}`);
+                });
+            } else {
+                console.error("WDDI options area (#wddi-options-area) not found!");
+                if(statusMessage) statusMessage.textContent = "UI Error.";
+            }
+            showArea('guessing-area'); // Make sure the guessing area is visible
+            console.log('WDDI Guessing area prepared and shown.');
+        });
+
+        // --- Common Listeners ---
+        socket.on('results_on_main_screen', () => {
+            console.log('Results on main screen notice.'); if(statusMessage) statusMessage.textContent = 'Check main screen!';
+            configureInputArea(null); showArea('guessing-area');
+        });
+        socket.on('overall_game_over_player', () => {
+            console.log('Overall game over notice.'); if(statusMessage) statusMessage.textContent = 'GAME OVER! Check main screen.';
+            configureInputArea(null); currentClientRoundType = null; showArea('guessing-area');
+        });
+
+        // --- User Interaction Handlers ---
+        function handleWddiChoice(event) {
+            // Get the actual text stored in the data attribute
+            const chosenOptionText = event.target.dataset.optionText;
+
+            if (!chosenOptionText) {
+                console.error("Clicked WDDI button missing option text!", event.target);
+                if (statusMessage) statusMessage.textContent = "Selection Error!";
+                return;
+            }
+
+            console.log(`WDDI Choice clicked: Text='${chosenOptionText}'`);
+            // Emit the event the server expects, sending the text
+            socket.emit('submit_wddi_guess', { 'guess_text': chosenOptionText });
+            console.log("   -> Emitted 'submit_wddi_guess' with text.");
+
+            // Disable all buttons in the area after choosing one
+            if(wddiOptionsArea) {
+                Array.from(wddiOptionsArea.children).forEach(btn => {
+                    btn.disabled = true;
+                    // Optional: highlight the selected button?
+                    if (btn === event.target) {
+                        btn.style.backgroundColor = '#2ecc71'; // Example: Green highlight
+                    }
+                });
+                console.log("   -> Disabled WDDI option buttons.");
+            }
+
+            if (statusMessage) {
+                statusMessage.textContent = 'Guess submitted! Waiting...';
+            }
+        }
+
+        // --- Attach Listeners and Get Elements After DOM Loaded ---
+        document.addEventListener('DOMContentLoaded', (event) => {
+             console.log("Player DOM loaded.");
+             // Get element references now
+             nameEntryArea = document.getElementById('name-entry-area');
+             nameInput = document.getElementById('nameInput');
+             joinButton = document.getElementById('joinButton');
+             guessingArea = document.getElementById('guessing-area');
+             // gameInfoDiv = document.getElementById('game-info'); // Removed for now
+             // gameRoundNumSpan = document.getElementById('game-round-num');
+             // gameRoundTotalSpan = document.getElementById('game-round-total');
+             guessLabel = document.getElementById('guess-label');
+             guessInput = document.getElementById('guessInput');
+             submitGuessButton = document.getElementById('submitGuessButton');
+             statusMessage = document.getElementById('status-message');
+             wddiOptionsArea = document.getElementById('wddi-options-area');
+
+             if (!nameEntryArea || !guessingArea || !statusMessage || !nameInput || !joinButton || !guessInput || !submitGuessButton || !wddiOptionsArea) {
+                 console.error("CRITICAL ERROR: One or more essential player controller elements not found!");
+                 if (statusMessage) statusMessage.textContent = "Page Load Error!";
+                 return;
+             }
+
+             // Attach join button listener
+             if(joinButton) {
+                 console.log("Attempting to attach JOIN listener...");
+                 joinButton.addEventListener('click', () => {
+                     console.log(">>> JOIN BUTTON CLICKED <<<");
+                     const name = nameInput.value.trim();
+                     console.log(`DEBUG: Name entered: '${name}'`);
+                     if (name) {
+                         console.log(`Registering as player: ${name}`);
+                         socket.emit('register_player', { name: name });
+                         console.log("DEBUG: register_player event emitted.");
+                         showArea('guessing-area'); // Show the guessing area div
+                         console.log("DEBUG: Called showArea('guessing-area').");
+                         if (statusMessage) statusMessage.textContent = 'Waiting for the game to start...';
+                         configureInputArea(null); // Hide specific inputs within guessing area
+                     } else {
+                         console.log("DEBUG: Name was empty.");
+                         if (statusMessage) statusMessage.textContent = 'Please enter a name!';
+                     }
+                     console.log(">>> JOIN BUTTON HANDLER FINISHED <<<");
+                 });
+                 console.log("DEBUG: Listener ATTACHED to joinButton.");
+             } else { console.error("ERROR: joinButton reference was null."); }
+
+             // Attach name input enter key listener
+             if(nameInput) { nameInput.addEventListener('keypress', function (e) { if (e.key === 'Enter' && joinButton && !joinButton.disabled) { joinButton.click(); }}); }
+
+             // Attach submit guess button listener
+             if(submitGuessButton) {
+                 console.log("Attempting to attach SUBMIT GUESS listener...");
+                 submitGuessButton.addEventListener('click', () => {
+                     console.log(">>> SUBMIT GUESS BUTTON CLICKED <<<");
+                     const guess = guessInput.value;
+                     console.log(`DEBUG: Guess value: '${guess}', Current Round Type: ${currentClientRoundType}`);
+                     if (currentClientRoundType === 'gta') {
+                          console.log("DEBUG: Processing as GTA guess...");
+                          if (guess !== '' && !isNaN(guess) && parseInt(guess) >= 0 && parseInt(guess) <= 120) { socket.emit('submit_gta_guess', { guess: parseInt(guess) }); console.log("DEBUG: submit_gta_guess emitted."); }
+                          else { console.log("DEBUG: Invalid GTA guess."); if (statusMessage) statusMessage.textContent = 'Invalid age (0-120).'; }
+                     } else if (currentClientRoundType === 'gty') {
+                          console.log("DEBUG: Processing as GTY guess...");
+                          if (guess !== '' && !isNaN(guess)) { socket.emit('submit_gty_guess', { guess: parseInt(guess) }); console.log("DEBUG: submit_gty_guess emitted."); }
+                          else { console.log("DEBUG: Invalid GTY guess."); if (statusMessage) statusMessage.textContent = 'Invalid year.'; }
+                     } else { console.log("DEBUG: No active round type known or submit clicked inappropriately."); if (statusMessage) statusMessage.textContent = "Not time to guess!"; }
+                     console.log(">>> SUBMIT GUESS HANDLER FINISHED <<<");
+                 });
+                 console.log("DEBUG: Listener ATTACHED to submitGuessButton.");
+             } else { console.error("ERROR: submitGuessButton reference was null."); }
+
+             // Attach guess input enter key listener
+             if(guessInput) { guessInput.addEventListener('keypress', function (e) { if (e.key === 'Enter' && submitGuessButton && !submitGuessButton.disabled) { submitGuessButton.click(); }}); }
+
+             console.log("Player initial listeners setup complete.");
+             showArea('name-entry-area'); // Ensure starting view
+
+        }); // End DOMContentLoaded
+
+    </script>
+</body>
+</html>

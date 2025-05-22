@@ -1,0 +1,20 @@
+{# templates/_gta_turn_results.html #}
+{# Expects variables: actual_age, results (list of dicts with name, guess, diff, round_score) #}
+<h2 id="results-title">Turn Results</h2>
+<h3 id="results-subtitle">Correct Age: <span style="color:#2ecc71;">{{ actual_age if actual_age is not none else '--' }}</span></h3>
+<ul id="results-list">
+    {% if results %}
+        {% for res in results %}
+        <li class="{{ 'highlight' if res.diff == 0 }}"> {# Use highlight class #}
+            <span class="player-name">{{ res.name }}</span>
+            <span class="detail-1">G: {{ res.guess }}</span>
+            <span class="detail-2">D: {{ res.diff }}</span>
+            <span class="detail-3">Rnd Score: {{ res.round_score }}</span>
+        </li>
+        {% endfor %}
+    {% else %}
+        <li>No results available.</li>
+    {% endif %}
+</ul>
+{# Overall scores not shown here, only after full round #}
+<div id="results-overall-scores" class="hidden"></div>

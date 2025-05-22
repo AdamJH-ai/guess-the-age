@@ -1,0 +1,8 @@
+{# templates/_player_list.html #}
+{% if player_names and player_names|length > 0 %}
+    {% for name in player_names %}
+    <li>{{ name }}</li>
+    {% endfor %}
+{% else %}
+    <li>Waiting for players...</li>
+{% endif %}

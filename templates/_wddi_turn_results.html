@@ -1,0 +1,64 @@
+{# templates/_wddi_turn_results.html #}
+{# Expects: question_text, image_url, shuffled_options, correct_answer, results (list), turn, total_turns #}
+
+<div class="turn-results wddi-results"> {# Wrapper class #}
+    <h2 id="results-title">Who Didn't Do It? - Turn {{ turn }}/{{ total_turns }} Results</h2>
+    <hr>
+
+    {# Display Question and Image again #}
+    <div class="question-area">
+        <h3>{{ question_text }}</h3>
+        {% if image_url %}
+            <img src="{{ image_url }}" alt="Question related image" class="question-image" style="max-height: 150px; margin-bottom: 15px;"> {# Slightly smaller image for results? #}
+        {% endif %}
+    </div>
+
+    {# Display Options - Highlighting the correct one #}
+    <div class="options-results-area" style="margin-bottom: 20px;">
+        <h4>Options Presented:</h4>
+        <ul class="wddi-options-list results-options"> {# Reuse list style, add specific class #}
+            {% for option in shuffled_options %}
+                <li class="{{ 'correct-answer-highlight' if option == correct_answer else '' }}">
+                   {{ option }} {% if option == correct_answer %} <strong>(Correct Answer)</strong>{% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    {# Display Player Guesses and Results #}
+    <h3 id="results-subtitle">Player Guesses:</h3>
+    <ul id="results-list"> {# Use existing ID for styling from main_screen.html #}
+        {% if results %}
+            {% for result in results %}
+                {# Use existing classes for layout #}
+                <li class="{{ 'highlight' if result.is_correct else '' }}"> {# Highlight row if correct #}
+                    <span class="player-name">{{ result.name }}</span>
+                    {# Use detail spans for alignment #}
+                    <span class="detail-1">Guessed: <strong>{{ result.guess }}</strong></span>
+                    <span class="detail-2">
+                        {% if result.is_correct %}
+                            <span style="color: #2ecc71; font-weight:bold;">Correct! (+1)</span>
+                         {% elif result.guess == 'N/A' %}
+                            <span style="color: #f39c12;">Missed</span>
+                        {% else %}
+                            <span style="color: #e74c3c;">Incorrect</span>
+                        {% endif %}
+                    </span>
+                   <span class="detail-3">Round Score: {{ result.round_score }}</span>
+                </li>
+            {% endfor %}
+        {% else %}
+            <li>No results to display.</li>
+        {% endif %}
+    </ul>
+</div>
+
+{# Add styles for the results options list in main_screen.html if needed #}
+{# Suggestion for main_screen.html CSS:
+   .results-options li.correct-answer-highlight {
+       background-color: #2ecc71 !important; /* Green for correct */
+       color: #ffffff !important;
+       font-weight: bold;
+       border: 2px solid yellow;
+   }
+#}
